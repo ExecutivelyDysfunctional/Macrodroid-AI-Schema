@@ -1,0 +1,4 @@
+# The canonical schema is owned by the repository maintainer.
+# Enable "Require review from Code Owners" in the branch protection rule to
+# make this review requirement blocking on GitHub.
+/macrodroid-llm-schema.yaml @ExecutivelyDysfunctional

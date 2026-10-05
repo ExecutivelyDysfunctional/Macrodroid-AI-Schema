@@ -1,0 +1,37 @@
+name: Protect canonical schema
+
+# pull_request_target deliberately runs the policy from the trusted base branch.
+# That prevents a pull request from bypassing this check by changing the workflow
+# or its helper script in the same change.
+on:
+  pull_request_target:
+  push:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  protected-schema:
+    name: Reject canonical schema changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the trusted policy revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Reject changes to the AI-protected schema
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PUSH_HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request_target" ]]; then
+            # Fetch the PR commit only for comparison. Do not check out or execute it.
+            git fetch --no-tags origin "+refs/pull/${PR_NUMBER}/head:refs/remotes/origin/schema-protection-pr"
+            ./scripts/check-protected-schema.sh "$BASE_SHA" "refs/remotes/origin/schema-protection-pr"
+          else
+            ./scripts/check-protected-schema.sh "$BASE_SHA" "$PUSH_HEAD_SHA"
+          fi
