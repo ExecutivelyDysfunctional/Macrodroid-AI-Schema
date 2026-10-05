@@ -1,0 +1,1 @@
+# Macrodroid-AI-Schema
